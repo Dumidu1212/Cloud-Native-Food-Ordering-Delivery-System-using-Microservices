@@ -1,0 +1,121 @@
+/* Register Page Styles */
+.register-container {
+    background-color: white;
+    margin: 50px auto;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 400px;
+}
+
+h2 {
+    text-align: center;
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+input,
+select {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: #4caf50;
+}
+
+.register-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.register-button:hover {
+    background-color: #45a049;
+}
+
+/* Role Fields Styles */
+.role-fields {
+    margin-top: 20px;
+}
+
+label {
+    font-size: 14px;
+    color: #555;
+    margin-top: 10px;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+/* MapPicker Styles */
+label[for="location"] {
+    font-size: 14px;
+    margin-top: 10px;
+    color: #333;
+    display: block;
+}
+
+.MapPicker {
+    margin-top: 10px;
+    height: 200px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Responsive Styles */
+@media (max-width: 480px) {
+    .register-container {
+        width: 90%;
+    }
+}
+
+.map-btn {
+    padding: 6px 12px;
+    margin: 5px;
+    background-color: #2e8b57;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.map-btn:hover {
+    background-color: #246b45;
+}
+
+.login-redirect-container {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.login-redirect-btn {
+    background: none;
+    border: none;
+    color: #007bff;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+    padding: 0;
+}
+
+.login-redirect-btn:hover {
+    color: #0056b3;
+}

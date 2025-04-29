@@ -1,0 +1,128 @@
+/* Base (mobile first) */
+.sidebar-container {
+  width: 100%;
+  background-color: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+}
+
+.sidebar-logo {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #e74c3c;
+  margin-right: 1rem;
+  white-space: nowrap;
+}
+
+.sidebar-menu {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  margin-right: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #2c3e50;
+  transition: background 0.2s;
+}
+
+.sidebar-menu-item:hover {
+  background: #f0f4f8;
+}
+
+.sidebar-menu-item.active {
+  background: hsl(0, 100%, 89.6%);
+  color: #e60000;
+}
+
+.sidebar-menu-item .menu-label {
+  display: none;
+}
+
+.sidebar-logout {
+  display: none;
+}
+
+/* Main content */
+.admin-main {
+  margin: 0; 
+  padding: 1rem;
+}
+
+/* Tablet: ≥768px */
+@media (min-width: 768px) {
+  .sidebar-container {
+    flex-direction: column;
+    width: 80px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    border-right: 1px solid #e0e0e0;
+    border-bottom: none;
+    padding: 1rem 0.5rem;
+  }
+  .sidebar-logo {
+    margin-bottom: 2rem;
+    font-size: 1.5rem;
+  }
+  .sidebar-menu {
+    flex-direction: column;
+  }
+  .sidebar-menu-item {
+    margin: 0 0 0.5rem 0;
+    justify-content: center;
+  }
+  .sidebar-menu-item .menu-label {
+    display: none;
+  }
+  .sidebar-logout {
+    display: flex;
+    margin-top: auto;
+    padding: 0.6rem;
+  }
+  .admin-main {
+    margin-left: 80px;
+  }
+}
+
+/* Desktop: ≥1024px */
+@media (min-width: 1024px) {
+  .sidebar-container {
+    width: 250px;
+    padding: 1.5rem;
+  }
+  .sidebar-logo {
+    font-size: 1.75rem;
+    margin-bottom: 2rem;
+  }
+  .sidebar-menu {
+    flex-direction: column;
+  }
+  .sidebar-menu-item {
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    justify-content: flex-start;
+  }
+  .sidebar-menu-item .menu-label {
+    display: inline;
+    margin-left: 0.75rem;
+  }
+  .sidebar-logout {
+    display: flex;
+    padding: 0.8rem;
+    margin-top: auto;
+  }
+  .admin-main {
+    margin-left: 250px;
+  }
+}
