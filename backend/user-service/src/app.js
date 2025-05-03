@@ -1,46 +1,42 @@
-// backend/user-service/src/app.js
-import express from 'express';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import cors from 'cors';
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import cors from "cors";
 
-import authRoutes  from './routes/authRoutes.js';
-import adminRoutes from './routes/adminRoutes.js';
-import logger, { errorHandler } from './utils/logger.js';
+import authRoutes from "./routes/authRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import logger, { errorHandler } from "./utils/logger.js";
 
 dotenv.config();
+console.log("🔍 Loaded MONGODB_URI:", process.env.MONGODB_URI); // debug log
 
 const app = express();
+const { info, error } = logger;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-const { info, error } = logger;
-
 // Health-check
-app.get('/health', (_req, res) => res.sendStatus(200));
+app.get("/health", (_req, res) => res.sendStatus(200));
 
-// Public/auth routes
-app.use('/api/auth', authRoutes);
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/users/admin", adminRoutes);
 
-// Admin-only routes (protected inside those routers)
-app.use('/api/users/admin', adminRoutes);
-
-// Global error handler (must come after all routes)
+// Global error handler
 app.use(errorHandler);
 
-// Connect to MongoDB and start the server
+// Connect and start
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
-    info('🗄️ Connected to MongoDB');
+    info("🗄️ Connected to MongoDB");
     const PORT = process.env.PORT || 3001;
-    app.listen(PORT, () =>
-      info(`👤 User Service listening on port ${PORT}`)
-    );
+    app.listen(PORT, () => info(`👤 User Service listening on port ${PORT}`));
   })
   .catch((err) => {
-    error('❌ Mongo connection error:', err);
+    error("❌ Mongo connection error:", err);
     process.exit(1);
   });
+
+export default app;

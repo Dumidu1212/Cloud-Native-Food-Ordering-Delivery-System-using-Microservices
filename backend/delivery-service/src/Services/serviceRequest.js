@@ -1,11 +1,11 @@
-import axios from "axios";
+const axios = require("axios");
+require("dotenv").config(); // Load .env file
 
+const ORDER_SERVICE_URL = process.env.ORDER_SERVICE_URL;
 // Define the base URLs for each service
 const SERVICE_BASE_URLS = {
-  userService: "http://localhost:8080/api",
-  orderService: "http://localhost:4040/api/orders",
+  orderService: ORDER_SERVICE_URL,
 };
-console.log("Configured service base URLs:", SERVICE_BASE_URLS);
 
 // Centralized request function for service-to-service communication
 const makeServiceRequest = async (
@@ -83,4 +83,4 @@ const makeServiceRequest = async (
   }
 };
 
-export default makeServiceRequest;
+module.exports = makeServiceRequest;

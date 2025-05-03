@@ -1,155 +1,125 @@
-// web-app/src/pages/common/Register.jsx
-import React, { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import CustomerFields from "./role-fields/CustomerFields"
-import DeliveryPersonFields from "./role-fields/DeliveryPersonFields"
-import RestaurantFields from "./role-fields/RestaurantFields"
-import axios from "axios"
-import "../../styles/pages/registerPage.css"
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import CustomerFields from "./role-fields/CustomerFields";
+import DeliveryPersonFields from "./role-fields/DeliveryPersonFields";
+import RestaurantFields from "./role-fields/RestaurantFields";
+import axios from "axios";
+import { api } from "./../../api/index"; 
+import "./../../styles/pages/registerPage.css";
 
-export default function Register() {
-  const navigate = useNavigate()
-  const [role, setRole]   = useState("")
-  const [form, setForm]   = useState({
-    name: "", email: "", password: "", role: "", phone: ""
-  })
-  const [coords, setCoords] = useState(null)       // geojson: { type:'Point', coordinates:[lng,lat] }
-  const [error, setError]   = useState("")
+const Register = () => {
+  const navigate = useNavigate();
+  const [role, setRole] = useState("");
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "",
+    phone: "",
+  });
 
-  const handleChange = e => {
-    const { name, value } = e.target
-    setForm(f => ({ ...f, [name]: value }))
-  }
+  const [coordinates, setCoordinates] = useState(null); // 👈 Store location here
 
-  const handleRoleChange = e => {
-    const r = e.target.value
-    setRole(r)
-    setForm(f => ({ ...f, role: r }))
-    setCoords(null)
-  }
+  const handleChange = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
 
-  const handleSubmit = async e => {
-    e.preventDefault()
-    setError("")
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    // basic validation
-    if (!form.name || !form.email || !form.password || !form.role) {
-      return setError("Please fill in all required fields.")
-    }
-    if (!form.phone) {
-      return setError("Please provide a phone number.")
-    }
-    // geo check
-    if (!coords?.coordinates?.length === 2) {
-      return setError("Please select your location on the map.")
+    console.log("Form data before submission:", form);
+    if (
+      !coordinates ||
+      !Array.isArray(coordinates.coordinates) ||
+      coordinates.coordinates.length !== 2
+    ) {
+      alert("Please select a location on the map.");
+      return;
     }
 
-    // build payload per role
-    const payload = { ...form }
-    // everyone needs an 'address'
-    payload.address = coords
-    // delivery also needs a separate 'location'
-    if (role === "delivery") {
-      payload.location = coords
-    }
+    // Final payload
+    const formData = {
+      ...form,
+      location: coordinates, // 👈 Add location here if present
+    };
 
     try {
-      const baseURL = import.meta.env.VITE_API_BASE_URL || ""
-      const url     = `${baseURL}/api/auth/register`
-      const res     = await axios.post(url, payload)
+      const res = await api.auth.register(formData);
 
-      if (res.status === 201) {
-        alert("Registration successful — please log in.")
-        navigate("/login")
-      } else {
-        setError("Unexpected response, please try again.")
+      if (res.status == 201) {
+        alert("Registration successful!");
+        navigate("/login");
       }
     } catch (err) {
-      console.error(err)
-      setError(
-        err.response?.data?.message ||
-        err.message ||
-        "Registration failed."
-      )
+      alert("Registration failed");
+      console.error(err);
     }
-  }
+  };
 
   return (
     <div className="register-container">
-      <h2>Create an Account</h2>
-      {error && <p className="text-danger">{error}</p>}
+      <h2>User Registration</h2>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          name="name"
-          placeholder="Name"
-          value={form.name}
+      <input
+        placeholder="Name"
+        onChange={(e) => handleChange("name", e.target.value)}
+      />
+      <input
+        placeholder="Email"
+        onChange={(e) => handleChange("email", e.target.value)}
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        onChange={(e) => handleChange("password", e.target.value)}
+      />
+
+      <select
+        onChange={(e) => {
+          const selectedRole = e.target.value;
+          setRole(selectedRole);
+          handleChange("role", selectedRole);
+        }}
+      >
+        <option value="">Select Role</option>
+        <option value="customer">Customer</option>
+        <option value="delivery">Delivery Person</option>
+        <option value="restaurant">Restaurant</option>
+      </select>
+
+      {role === "customer" && (
+        <CustomerFields
           onChange={handleChange}
-          required
+          onLocationChange={(coords) => setCoordinates(coords)}
         />
-
-        <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          value={form.email}
+      )}
+      {role === "delivery" && (
+        <DeliveryPersonFields
           onChange={handleChange}
-          required
+          onLocationChange={(coords) => setCoordinates(coords)} // 👈 receive location
         />
-
-        <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          value={form.password}
+      )}
+      {role === "restaurant" && (
+        <RestaurantFields
           onChange={handleChange}
-          required
+          onLocationChange={(coords) => setCoordinates(coords)} // ✅ Fix: pass the missing prop
         />
+      )}
 
-        <input
-          name="phone"
-          placeholder="Phone number"
-          value={form.phone}
-          onChange={handleChange}
-          required
-        />
+      <button onClick={handleSubmit} className="register-button">
+        Register
+      </button>
 
-        <select
-          name="role"
-          value={role}
-          onChange={handleRoleChange}
-          required
-        >
-          <option value="">Select Role</option>
-          <option value="customer">Customer</option>
-          <option value="delivery">Delivery Person</option>
-          <option value="restaurant">Restaurant</option>
-        </select>
-
-        {role === "customer" && (
-          <CustomerFields onLocationChange={setCoords} />
-        )}
-        {role === "delivery" && (
-          <DeliveryPersonFields onLocationChange={setCoords} />
-        )}
-        {role === "restaurant" && (
-          <RestaurantFields onLocationChange={setCoords} />
-        )}
-
-        <button type="submit" className="register-button">
-          Register
-        </button>
-      </form>
-
-      <p>
-        Already have an account?{" "}
+      <div className="login-redirect-container">
         <button
-          className="register-redirect-btn"
           onClick={() => navigate("/login")}
+          className="login-redirect-btn"
         >
-          Log in
+          Already have an account?{" "}
         </button>
-      </p>
+      </div>
     </div>
-  )
-}
+  );
+};
+
+export default Register;

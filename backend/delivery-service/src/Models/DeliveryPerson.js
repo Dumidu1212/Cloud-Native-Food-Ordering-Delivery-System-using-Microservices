@@ -1,9 +1,9 @@
-import { Schema, model } from "mongoose";
+const mongoose = require("mongoose");
 
-const deliveryPersonSchema = new Schema(
+const deliveryPersonSchema = new mongoose.Schema(
   {
     userId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
@@ -50,4 +50,4 @@ const deliveryPersonSchema = new Schema(
 
 deliveryPersonSchema.index({ location: "2dsphere" }); // Enable geolocation queries
 
-export default model("DeliveryPerson", deliveryPersonSchema);
+module.exports = mongoose.model("DeliveryPerson", deliveryPersonSchema);

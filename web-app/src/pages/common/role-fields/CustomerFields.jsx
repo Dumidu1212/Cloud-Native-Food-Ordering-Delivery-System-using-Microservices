@@ -15,10 +15,6 @@ const CustomerFields = ({ onChange, onLocationChange }) => {
 
   return (
     <div className="role-fields">
-      {/* <input
-        placeholder="Phone"
-        onChange={(e) => onChange("phone", e.target.value)}
-      /> */}
       <label>📍 Pick your location:</label>
       <MapPickerLeaflet onLocationChange={handleLocation} />
     </div>

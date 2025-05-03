@@ -1,27 +1,38 @@
-// backend/delivery-service/src/routes/deliveryRoutes.js
-import express from 'express'
-import {
+const express = require("express");
+const router = express.Router();
+const {
   getProfile,
   updateProfile,
   assignOrder,
   checkAvailability,
-  updateAvailability
-} from '../Controllers/deliveryController.js'
-import { verifyToken, verifyRole } from '../Middleware/authMiddleware.js'
+  updateAvailability,
+} = require("./../Controllers/deliveryController");
+const { verifyToken, verifyRole } = require("../Middleware/authMiddleware");
 
-const router = express.Router()
+// Internal route: auto-assign driver to order
+//http://delivery-service:4000/api/delivery/assign
+router.post("/assign",verifyToken,assignOrder);
 
-router.post('/assign', verifyToken, assignOrder)
+// Driver routes
+// This route is used to fetch the profile of a driver
+//http://delivery-service:4000/api/delivery/profile/:id
+router.get("/profile", verifyToken, getProfile);
 
-router.get('/profile', verifyToken, getProfile)
+// This route is used to update the profile of a driver
+//http://delivery-service:4000/api/delivery/profile
 router.put(
-  '/profile',
+  "/profile",
   verifyToken,
-  verifyRole('delivery'),
+  verifyRole("deliveryPerson"),
   updateProfile
-)
+);
 
-router.get('/availability/:id', verifyToken, checkAvailability)
-router.put('/UpdateAvailability/:id', verifyToken, updateAvailability)
+// This route is used to update the availability status of a driver
+//http://delivery-service:4000/api/delivery/availability/:id
+router.get("/availability/:id", checkAvailability);
 
-export default router
+// This route is used to toggle the availability status of a driver
+//http://delivery-service:4000/api/delivery/UpdateAvailability/:id
+router.put("/UpdateAvailability/:id", updateAvailability);
+
+module.exports = router;

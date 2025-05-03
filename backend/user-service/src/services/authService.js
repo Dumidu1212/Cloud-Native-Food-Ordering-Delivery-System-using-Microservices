@@ -27,8 +27,11 @@ export async function registerUser({ name, email, phone, password, role }) {
 }
 
 export async function loginUser({ email, password }) {
-  // 1) find
+  console.log(`inside login user function`,email,password);
+  console.log()
   const user = await User.findOne({ email });
+  console.log("inside login user service")
+  console.log(user);  
   if (!user) throw new ApiError(401, 'Invalid email or password');
 
   // 2) compare

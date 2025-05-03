@@ -1,25 +1,30 @@
-// backend/delivery-service/src/services/deliveryService.js
-
-import makeServiceRequest from "./serviceRequest.js";
-import DeliveryPerson     from "../Models/DeliveryPerson.js";   // default export!
+// Description: This file contains the service functions for the delivery person service.
+const makeServiceRequest = require("./serviceRequest");
+const DeliveryPerson = require("../Models/DeliveryPerson");
 
 // Automatically assign an available delivery person to an order
-export async function assignOrder(orderId, token = null) {
+const assignOrder = async (orderId, token = null) => {
+  // 1. Find the first available delivery person
   console.log("inside delivery-service service folder");
 
-  // 1. Find the first available delivery person
-  const availableDriver = await DeliveryPerson
-    .findOne({ isAvailable: true, status: "Active" })
-    .sort({ updatedAt: 1 });
+  const availableDriver = await DeliveryPerson.findOne({
+    isAvailable: true,
+    status: "Active",
+  }).sort({ updatedAt: 1 });
 
   if (!availableDriver) {
     throw new Error("No available delivery person found");
   }
+  const availableDriverUserId = availableDriver.userId;
 
+  const Driver = await DeliveryPerson.findOne({
+    userId: availableDriverUserId,
+  });
+
+  deliveryPersonDriverId = Driver._id;
+  
   console.log("Available driver found:", availableDriver.name);
-  console.log("Driver ID:", availableDriver._id);
 
-  // 2. Fetch the order from Order Service
   const order = await makeServiceRequest(
     "orderService",
     "GET",
@@ -27,42 +32,48 @@ export async function assignOrder(orderId, token = null) {
     null,
     token
   );
-  console.log("Order response from order-service:", order);
+  
+  console.log("Order response from order-service:", order);  
 
   if (!order) {
     throw new Error("Order not found");
   }
 
-  // 3. Check proximity
-  const orderLocation  = order.restaurantLocation;   // { lat, lon }
-  const driverLocation = availableDriver.location;   // { type: 'Point', coordinates: [lon, lat] }
+  const orderLocation = order.restaurantLocation; 
+  console.log("Order location:", orderLocation);
+  console.log("Driver location:", availableDriver.location);
+ 
+  const driverLocation = availableDriver.location; 
+  const distance = calculateDistance(driverLocation, orderLocation);
 
-  // convert Mongoose Point into { lat, lon }
-  const [lon, lat] = driverLocation.coordinates;
-  const distance = calculateDistance({ lat, lon }, orderLocation);
+  const maxDistance = 5; // in kilometers
 
-  const maxDistance = 5; // km
   if (distance > maxDistance) {
     throw new Error("No available driver within the required range");
   }
 
-  // 4. Assign via Order Service
+  // 4. Assign the delivery person to the order via order-service
   const result = await makeServiceRequest(
     "orderService",
     "POST",
     `/assign/${orderId}`,
-    { deliveryPersonId: availableDriver._id },
+    {
+      deliveryPersonUserId: availableDriverUserId,
+      deliveryPersonDriverId: deliveryPersonDriverId,
+    },
     token
   );
+
   console.log("Order assignment result:", result);
 
-  // 5. Mark driver unavailable
+  // 5. Mark the driver as unavailable (optional)
   availableDriver.isAvailable = false;
-  await availableDriver.save();
-  console.log("Driver availability updated:", availableDriver.isAvailable);
+  const assigningDelivery = await availableDriver.save();
+
+  console.log("Driver availability updated:", assigningDelivery.isAvailable);
 
   return {
-    message: "Order successfully assigned",
+    message: "Order successfully assigned to delivery person",
     orderResult: result,
     deliveryPerson: {
       id: availableDriver._id,
@@ -70,20 +81,31 @@ export async function assignOrder(orderId, token = null) {
       email: availableDriver.email,
     },
   };
-}
+};
 
-function calculateDistance(driverLoc, orderLoc) {
-  const toRad = d => (d * Math.PI) / 180;
-  const R = 6371; // Earth radius km
+const calculateDistance = (driverLocation, orderLocation) => {
+  const toRadians = (degree) => (degree * Math.PI) / 180;
 
-  const dLat = toRad(orderLoc.lat - driverLoc.lat);
-  const dLon = toRad(orderLoc.lon - driverLoc.lon);
+  const R = 6371; // Radius of Earth in km
 
-  const a = Math.sin(dLat/2)**2
-          + Math.cos(toRad(driverLoc.lat))
-          * Math.cos(toRad(orderLoc.lat))
-          * Math.sin(dLon/2)**2;
+  const lat1 = toRadians(driverLocation.lat);
+  const lon1 = toRadians(driverLocation.lon);
+  const lat2 = toRadians(orderLocation.lat);
+  const lon2 = toRadians(orderLocation.lon);
 
+  const dLat = lat2 - lat1;
+  const dLon = lon2 - lon1;
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
+
+  const distance = R * c; // in kilometers
+  return distance;
+};
+
+module.exports = {
+  assignOrder,
+};
+

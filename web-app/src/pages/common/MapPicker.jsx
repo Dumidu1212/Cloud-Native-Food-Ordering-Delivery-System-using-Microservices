@@ -99,21 +99,21 @@ const MapPickerLeaflet = ({ onLocationChange }) => {
   const [tempGeoJson, setTempGeoJson] = useState(null);
   const [saved, setSaved] = useState(false);
 
-   const handleSave = () => {
-     if (!tempGeoJson) {
-       alert("Please select a location on the map first.");
-       return;
-     }
-     onLocationChange(tempGeoJson); // Send to parent
-     setSaved(true);
-   };
+  const handleSave = () => {
+    if (!tempGeoJson) {
+      alert("Please select a location on the map first.");
+      return;
+    }
+    onLocationChange(tempGeoJson); // Send to parent
+    setSaved(true);
+  };
 
-   const handleReset = () => {
-     setPosition(null);
-     setTempGeoJson(null);
-     setSaved(false);
-     onLocationChange(null); // Clear location in parent
-   };
+  const handleReset = () => {
+    setPosition(null);
+    setTempGeoJson(null);
+    setSaved(false);
+    onLocationChange(null); // Clear location in parent
+  };
 
   const handleUpdate = (location) => {
     if (!location?.lat || !location?.lng) return;
@@ -165,11 +165,12 @@ const MapPickerLeaflet = ({ onLocationChange }) => {
         </button>
       </div>
 
-      {!saved || !position && (
-        <p style={{ color: "red", textAlign: "center" }}>
-          📍 Please click on the map to select your location.
-        </p>
-      )}
+      {!saved ||
+        (!position && (
+          <p style={{ color: "red", textAlign: "center" }}>
+            📍 Please click on the map to select your location.
+          </p>
+        ))}
 
       {saved && position && (
         <p style={{ color: "green", textAlign: "center" }}>

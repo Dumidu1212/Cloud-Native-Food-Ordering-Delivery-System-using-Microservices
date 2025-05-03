@@ -2,8 +2,8 @@
 import dotenv from 'dotenv';
 import http from 'http';
 import mongoose from 'mongoose';
-import app from './app.js';
-import { info, error } from './utils/logger.js';
+import app from './src/app.js';
+import { info, error } from './src/utils/logger.js';
 
 dotenv.config();
 
@@ -13,7 +13,7 @@ const MONGODB_URI = process.env.MONGODB_URI;
 const server = http.createServer(app);
 
 mongoose
-  .connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(MONGODB_URI)
   .then(() => {
     info(`✅ Connected to MongoDB`);
     server.listen(PORT, () => info(`🚀 Server listening on port ${PORT}`));

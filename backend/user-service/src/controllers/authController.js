@@ -69,7 +69,6 @@ export const registerUser = async (req, res, next) => {
           location,
           email,
           phone,
-          /* ...etc... */
           status: "Pending",
         });
         break;
@@ -106,8 +105,9 @@ export const registerUser = async (req, res, next) => {
 
 export const loginController = async (req, res, next) => {
   try {
+    console.log("inside login login controller")
     const loginResult = await loginUser(req.body);
-    // loginResult === { token, userId, name, role, email }
+    console.log("result:", loginResult);
     return res.status(200).json(loginResult);
   } catch (err) {
     next(err);

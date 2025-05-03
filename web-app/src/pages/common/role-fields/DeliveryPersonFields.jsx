@@ -4,7 +4,7 @@ import "./../../../styles/pages/registerPage.css";
 
 const DeliveryPersonFields = ({ onChange, onLocationChange }) => {
   const [location, setLocation] = useState(null);
-  
+
   console.log("DeliveryPersonFields: location", location);
 
   const handleLocation = (location) => {
@@ -15,10 +15,10 @@ const DeliveryPersonFields = ({ onChange, onLocationChange }) => {
 
   return (
     <div className="role-fields">
-      {/* <input
+      <input
         placeholder="Phone"
         onChange={(e) => onChange("phone", e.target.value)}
-      /> */}
+      />
       <input
         placeholder="Vehicle Number"
         onChange={(e) => onChange("vehicleNumber", e.target.value)}

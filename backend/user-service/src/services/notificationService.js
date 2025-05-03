@@ -1,9 +1,22 @@
 // backend/user-service/src/services/notificationService.js
 import axios from 'axios'
 import logger from '../utils/logger.js'
+import dotenv from "dotenv";
+dotenv.config();
 
 const { info, error } = logger
-const NOTIF_BASE = process.env.NOTIFICATION_SERVICE_URL.replace(/\/$/, '') + '/api/notifications'
+
+
+const notifUrl = process.env.NOTIFICATION_SERVICE_URL;
+
+if (!notifUrl) {
+  throw new Error(
+    "NOTIFICATION_SERVICE_URL is not defined in environment variables"
+  );
+}
+
+const NOTIF_BASE = notifUrl.replace(/\/$/, "") + "/api/notifications";
+
 
 /**
  * Dispatches an in‑app, email or sms notification via the Notification Service.
