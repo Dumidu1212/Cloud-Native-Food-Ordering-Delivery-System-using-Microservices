@@ -1,119 +1,93 @@
-import express from 'express';
-import cors from 'cors';
-import { createProxyMiddleware } from 'http-proxy-middleware';
-import dotenv from 'dotenv';
+import dotenv from 'dotenv'
+dotenv.config()
 
-dotenv.config();
+import express from 'express'
+import helmet from 'helmet'
+import compression from 'compression'
+import cors from 'cors'
+import morgan from 'morgan'
+import { createProxyMiddleware } from 'http-proxy-middleware'
 
+// --- 1) Validate required env vars ---
 const {
-  FRONTEND_URL,
   API_GATEWAY_PORT,
+  FRONTEND_URL,
   USER_SERVICE_URL,
   RESTAURANT_SERVICE_URL,
   ORDER_SERVICE_URL,
   DELIVERY_SERVICE_URL,
   PAYMENT_SERVICE_URL,
   NOTIFICATION_SERVICE_URL
-} = process.env;
+} = process.env
 
-const app = express();
+const missing = [
+  ['USER_SERVICE_URL', USER_SERVICE_URL],
+  ['RESTAURANT_SERVICE_URL', RESTAURANT_SERVICE_URL],
+  ['ORDER_SERVICE_URL', ORDER_SERVICE_URL],
+  ['DELIVERY_SERVICE_URL', DELIVERY_SERVICE_URL],
+  ['PAYMENT_SERVICE_URL', PAYMENT_SERVICE_URL],
+  ['NOTIFICATION_SERVICE_URL', NOTIFICATION_SERVICE_URL],
+]
+  .filter(([,v]) => !v)
+  .map(([k]) => k)
 
-// Enable CORS only from our front-end
-app.use(cors({ origin: FRONTEND_URL || '*' }));
+if (missing.length) {
+  console.error(`❌ Missing required env vars: ${missing.join(', ')}`)
+  process.exit(1)
+}
 
-// Health-check endpoint
-app.get('/health', (_req, res) => res.sendStatus(200));
+// --- 2) Create Express app & global middleware ---
+const app = express()
+app.use(helmet())                              // security headers
+app.use(compression())                         // gzip
+app.use(cors({ origin: FRONTEND_URL || '*' })) // CORS
+app.use(express.json())                        // JSON body parser
+app.use(express.urlencoded({ extended: false }))
+app.use(morgan('combined'))                    // access logs
 
-// Proxy /api/auth → user-service **without** stripping the path
-app.use(
-  '/api/auth',
-  createProxyMiddleware({
-    target: USER_SERVICE_URL,
+// --- 3) Health check ---
+app.get('/health', (_req, res) => res.sendStatus(200))
+
+// --- 4) Proxy factory ---
+function makeProxy(path, target, stripPrefix = true) {
+  return createProxyMiddleware({
+    context: path,
+    target,
     changeOrigin: true,
-    logLevel: 'debug'
-    // no pathRewrite: we want to forward /api/auth/register → /api/auth/register
+    // only strip if your service mounts its own routes at "/"
+    pathRewrite: stripPrefix ? { [`^${path}`]: '' } : undefined,
+    logLevel: 'warn',
+    onError(err, _req, res) {
+      console.error(`❌ Proxy error on "${path}" → ${target}:`, err.message)
+      res.status(502).json({ error: 'Bad gateway' })
+    }
   })
-);
+}
 
-// All other user-service routes (strip `/api/users`)
-app.use(
-  '/api/users',
-  createProxyMiddleware({
-    target: USER_SERVICE_URL,
-    changeOrigin: true,
-    pathRewrite: { '^/api/users': '' },
-    logLevel: 'debug'
-  })
-);
+// --- 5) Mount your microservices ---
+// **Auth** (needs full `/api/auth/...`)
+app.use( makeProxy('/api/auth',         USER_SERVICE_URL,       false) )
+// **User‐Service Admin** (keep `/api/users/...`)
+app.use( makeProxy('/api/users',        USER_SERVICE_URL,       false) )
+// **Restaurants Admin** (keep `/api/restaurants/...`)
+app.use( makeProxy('/api/restaurants',  RESTAURANT_SERVICE_URL, false) )
 
-// Restaurant service (public & admin)
-app.use(
-  '/api/restaurants',
-  createProxyMiddleware({
-    target: RESTAURANT_SERVICE_URL,
-    changeOrigin: true,
-    pathRewrite: { '^/api/restaurants': '' },
-    logLevel: 'debug'
-  })
-);
+// Everything else you can strip if the downstream service mounts at `/`
+app.use( makeProxy('/api/orders',       ORDER_SERVICE_URL,      true ) )
+app.use( makeProxy('/api/delivery',     DELIVERY_SERVICE_URL,   true ) )
+app.use( makeProxy('/api/payments',     PAYMENT_SERVICE_URL,    true ) )
+app.use( makeProxy('/api/financials',   PAYMENT_SERVICE_URL,    true ) )
+app.use( makeProxy('/api/notifications',NOTIFICATION_SERVICE_URL,true ) )
 
-// Order service
-app.use(
-  '/api/orders',
-  createProxyMiddleware({
-    target: ORDER_SERVICE_URL,
-    changeOrigin: true,
-    pathRewrite: { '^/api/orders': '' },
-    logLevel: 'debug'
-  })
-);
+// --- 6) 404 & global error handlers ---
+app.use((_req, res) => res.status(404).json({ error: 'Not found' }))
+app.use((err, _req, res, _next) => {
+  console.error('❌ Unhandled error:', err)
+  res.status(500).json({ error: 'Internal server error' })
+})
 
-// Delivery service
-app.use(
-  '/api/delivery',
-  createProxyMiddleware({
-    target: DELIVERY_SERVICE_URL,
-    changeOrigin: true,
-    pathRewrite: { '^/api/delivery': '' },
-    logLevel: 'debug'
-  })
-);
-
-// Payment service
-app.use(
-  '/api/payments',
-  createProxyMiddleware({
-    target: PAYMENT_SERVICE_URL,
-    changeOrigin: true,
-    pathRewrite: { '^/api/payments': '' },
-    logLevel: 'debug'
-  })
-);
-
-// Financial overview (also payment service)
-app.use(
-  '/api/financials',
-  createProxyMiddleware({
-    target: PAYMENT_SERVICE_URL,
-    changeOrigin: true,
-    pathRewrite: { '^/api/financials': '' },
-    logLevel: 'debug'
-  })
-);
-
-// Notification service (in-app, email, sms)
-app.use(
-  '/api/notifications',
-  createProxyMiddleware({
-    target: NOTIFICATION_SERVICE_URL,
-    changeOrigin: true,
-    pathRewrite: { '^/api/notifications': '' },
-    logLevel: 'debug'
-  })
-);
-
-// Start the server
-const port = API_GATEWAY_PORT || 3000;
+// --- 7) Start listening ---
+const port = parseInt(API_GATEWAY_PORT, 10) || 3000
 app.listen(port, () => {
-  console.log(`🚀 API Gateway listening on port ${port}`);
-});
+  console.info(`🚀 API Gateway listening on port ${port}`)
+})

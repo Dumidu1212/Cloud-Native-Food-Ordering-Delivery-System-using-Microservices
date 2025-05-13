@@ -1,41 +1,50 @@
-// src/pages/admin/RestaurantApproval.jsx
-import React, { useEffect, useState } from 'react';
-import { fetchRestaurants, updateRestaurantStatus } from '../../services/adminApi.js';
+import { useEffect, useState } from 'react';
+import styled from 'styled-components';
+import Loader from '../../components/admin/Loader';
+import { Table } from '../../components/admin/CardTable';
+import {
+  fetchRestaurants,
+  updateRestaurantStatus,
+  approveRestaurant,
+  deleteRestaurant
+} from '../../services/adminApi';
 
-export default function RestaurantApproval() {
-  const [rests, setRests] = useState([]);
-  const [loading, setLoading] = useState(true);
+const Btn = styled.button`
+  margin-right:.5rem;border:none;background:none;font:inherit;
+  color:${({theme})=>theme.colours.primary};cursor:pointer;
+  &.approve {color:${({theme})=>theme.colours.success}}
+  &.danger  {color:${({theme})=>theme.colours.danger}}
+`;
 
-  const load = async () => {
+export default function RestaurantApproval(){
+  const [rows,setRows]   = useState([]);
+  const [loading,setLoading]=useState(true);
+
+  const load = async()=>{
     setLoading(true);
-    const { data } = await fetchRestaurants();
-    setRests(data.data);
-    setLoading(false);
+    try{ setRows(await fetchRestaurants()); }finally{ setLoading(false); }
   };
+  useEffect(()=>{load()},[]);
 
-  useEffect(() => { load(); }, []);
+  const approve = r => approveRestaurant(r._id).then(load);
+  const toggle  = r => updateRestaurantStatus(r._id,r.status==='Active'?'Inactive':'Active').then(load);
+  const remove  = r => window.confirm('Delete?') && deleteRestaurant(r._id).then(load);
 
-  const toggle = async (id, cur) => {
-    await updateRestaurantStatus(id, cur==='Active'?'Inactive':'Active');
-    load();
-  };
-
-  if (loading) return <p>Loading…</p>;
-  return (
-    <table className="table-auto w-full">
-      <thead><tr><th>Name</th><th>Owner</th><th>Status</th><th>Action</th></tr></thead>
+  return loading ? <Loader/> : (
+    <Table>
+      <thead><tr><th>Name</th><th>Email</th><th>Status</th><th/></tr></thead>
       <tbody>
-        {rests.map(r => (
+        {rows.map(r=>(
           <tr key={r._id}>
-            <td>{r.restaurantName}</td>
-            <td>{r.restaurantOwner}</td>
-            <td>{r.status}</td>
+            <td>{r.name}</td><td>{r.email}</td><td>{r.status}</td>
             <td>
-              <button onClick={()=>toggle(r._id, r.status)}>{r.status==='Active'?'Deactivate':'Activate'}</button>
+              {r.status==='Pending' && <Btn className="approve" onClick={()=>approve(r)}>Approve</Btn>}
+              <Btn onClick={()=>toggle(r)}>{r.status==='Active'?'Deactivate':'Activate'}</Btn>
+              <Btn className="danger" onClick={()=>remove(r)}>Delete</Btn>
             </td>
           </tr>
         ))}
       </tbody>
-    </table>
+    </Table>
   );
 }

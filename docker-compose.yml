@@ -1,6 +1,4 @@
-
 services:
-  # 1) MongoDB
   mongo:
     image: mongo:6.0
     container_name: ds-assignment-mongo
@@ -10,7 +8,6 @@ services:
     volumes:
       - mongo-data:/data/db
 
-  # 2) RabbitMQ (for async notifications, optional)
   rabbitmq:
     image: rabbitmq:3-management
     container_name: ds-assignment-rabbitmq
@@ -19,8 +16,8 @@ services:
       - "5672:5672"
       - "15672:15672"
 
-  # 3) API Gateway
   api-gateway:
+    image: ds-assignment-api-gateway:${VERSION}
     build:
       context: ./backend/api-gateway
       dockerfile: Dockerfile
@@ -48,40 +45,40 @@ services:
       - payment-service
       - notification-service
 
-  # 4) User Service
   user-service:
+    image: ds-assignment-user:${VERSION}
     build:
       context: ./backend/user-service
       dockerfile: Dockerfile
     container_name: ds-assignment-user
-    ports:
-      - "${USER_SERVICE_PORT}:3001"
     env_file:
       - .env
     environment:
       - PORT=${USER_SERVICE_PORT}
+    ports:
+      - "${USER_SERVICE_PORT}:3001"
     depends_on:
       - mongo
 
-  # 5) Restaurant Service
   restaurant-service:
+    image: ds-assignment-restaurant:${VERSION}
     build:
       context: ./backend/restaurant-service
       dockerfile: Dockerfile
       args:
         SERVICE_PORT: ${RESTAURANT_SERVICE_PORT}
     container_name: ds-assignment-restaurant
-    ports:
-      - "${RESTAURANT_SERVICE_PORT}:3002"
     env_file:
       - .env
     environment:
       - PORT=${RESTAURANT_SERVICE_PORT}
+    ports:
+      - "${RESTAURANT_SERVICE_PORT}:3002"
     depends_on:
       - mongo
 
-  # 6) Order Service
   order-service:
+    image: ds-assignment-order:${VERSION}
     build:
       context: ./backend/order-service
       dockerfile: Dockerfile
@@ -97,8 +94,8 @@ services:
     depends_on:
       - mongo
 
-  # 7) Delivery Service
   delivery-service:
+    image: ds-assignment-delivery:${VERSION}
     build:
       context: ./backend/delivery-service
       dockerfile: Dockerfile
@@ -114,8 +111,8 @@ services:
     depends_on:
       - mongo
 
-  # 8) Payment Service
   payment-service:
+    image: ds-assignment-payment:${VERSION}
     build:
       context: ./backend/payment-service
       dockerfile: Dockerfile
@@ -131,15 +128,14 @@ services:
     depends_on:
       - mongo
 
-  # 9) Notification Service
   notification-service:
+    image: ds-assignment-notification:${VERSION}
     build:
       context: ./backend/notification-service
       dockerfile: Dockerfile
       args:
         SERVICE_PORT: ${NOTIFICATION_SERVICE_PORT}
     container_name: ds-assignment-notification
-    # load both the root .env and your notification‑service .env
     env_file:
       - .env
     environment:
@@ -149,7 +145,6 @@ services:
     depends_on:
       - mongo
       - rabbitmq
-
 
 volumes:
   mongo-data:

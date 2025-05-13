@@ -23,6 +23,13 @@ const profileModels = {
   customer:   Customer,
 };
 
+export async function findUserIdFromProfile(profileId, role) {
+  const Profile = profileModels[role];                // restaurant | delivery
+  if (!Profile) return null;                          // safety-guard
+  const doc = await Profile.findById(profileId).select('userId').lean();
+  return doc ? doc.userId : null;                     // null → not found
+}
+
 /**
  * GET /api/users/admin/users
  * List all users (paginated), excluding sensitive fields.
@@ -32,9 +39,15 @@ export const listAllUsers = asyncHandler(async (req, res) => {
   const limit = Math.max(1, parseInt(req.query.limit ?? '20', 10));
   const skip  = (page - 1) * limit;
 
+  // if you pass ?role=delivery (or admin|customer|restaurant), we'll filter
+  const filter = {};
+  if (req.query.role) {
+    filter.role = req.query.role;
+  }
+
   const [ total, users ] = await Promise.all([
-    User.countDocuments(),
-    User.find()
+    User.countDocuments(filter),
+    User.find(filter)
       .select('-password -__v')
       .skip(skip)
       .limit(limit)

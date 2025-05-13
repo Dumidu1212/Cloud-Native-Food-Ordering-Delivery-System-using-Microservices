@@ -1,4 +1,3 @@
-// web-app/src/pages/common/Register.jsx
 import React, { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import CustomerFields from "./role-fields/CustomerFields"

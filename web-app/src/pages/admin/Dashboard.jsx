@@ -1,15 +1,16 @@
-// src/pages/admin/Dashboard.jsx
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import Sidebar from '../../components/admin/Sidebar.jsx';
+import { Outlet }        from 'react-router-dom';
+import { ThemeProvider } from 'styled-components';
+import { theme }         from '../../ui/adminTheme';
+import { GlobalStyle }   from '../../ui/adminGlobalStyle';
+import PageLayout        from '../../components/admin/PageLayout';
 
-export default function AdminDashboard() {
-  return (
-    <div className="admin-dashboard">
-      <Sidebar />
-      <main className="admin-main">
-        <Outlet />
-      </main>
-    </div>
+export default function AdminDashboard(){
+  return(
+    <ThemeProvider theme={theme}>
+      <GlobalStyle/>
+      <PageLayout>
+        <Outlet/>
+      </PageLayout>
+    </ThemeProvider>
   );
 }

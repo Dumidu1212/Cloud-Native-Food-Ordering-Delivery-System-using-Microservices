@@ -10,6 +10,7 @@ import RestaurantDashboard from './pages/restaurant/RestaurantDashboard.jsx'
 import AdminDashboard      from './pages/admin/Dashboard.jsx'
 import UserManagement      from './pages/admin/UserManagement.jsx'
 import RestaurantApproval  from './pages/admin/RestaurantApproval.jsx'
+import DeliveryApproval   from './pages/admin/DeliveryApproval.jsx'
 import FinancialOverview   from './pages/admin/FinancialOverview.jsx'
 
 import DeliveryLayout      from './components/delivery/DeliveryLayout.jsx'
@@ -62,6 +63,7 @@ export default function App() {
       }>
         <Route path="users"       element={<UserManagement     />} />
         <Route path="restaurants" element={<RestaurantApproval />} />
+        <Route path="deliveries" element={<DeliveryApproval />} />
         <Route path="financials"  element={<FinancialOverview  />} />
         <Route path="*"           element={<Navigate to="users" replace/>}/>
       </Route>
